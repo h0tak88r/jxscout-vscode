@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { AstAnalysisTreeProvider } from "../providers/ast-analysis-tree-provider";
 import { FileExplorerTreeProvider } from "../providers/file-explorer-tree-provider";
-import { ViewScope } from "../types";
+import { ViewScope, GroupMode } from "../types";
 
 export function registerCommands(
   context: vscode.ExtensionContext,
@@ -9,7 +9,8 @@ export function registerCommands(
   explorerTreeProvider: FileExplorerTreeProvider | null,
   astView: vscode.TreeView<any>,
   workspaceView: vscode.TreeView<any> | null,
-  fileView: vscode.TreeView<any> | null
+  fileView: vscode.TreeView<any> | null,
+  workspaceTreeProvider: AstAnalysisTreeProvider | null
 ) {
   // Set initial scope context
   vscode.commands.executeCommand("setContext", "scope", "file");
@@ -46,6 +47,22 @@ export function registerCommands(
       astView.title = `Descriptors (${analysisTreeProvider.getScope()}) - ${
         newSortMode === "alphabetical" ? "A-Z" : "By Occurrence"
       }`;
+    }
+  );
+
+  // Toggle group mode command
+  const toggleGroupModeDisposable = vscode.commands.registerCommand(
+    "jxscout.toggleGroupMode",
+    () => {
+      if (!workspaceTreeProvider || !workspaceView) { return; }
+      const newMode: GroupMode =
+        workspaceTreeProvider.getGroupMode() === "file"
+          ? "matchType"
+          : "file";
+      workspaceTreeProvider.setGroupMode(newMode);
+      workspaceView.title = `Workspace Matchers (${
+        newMode === "file" ? "By File" : "By Match"
+      })`;
     }
   );
 
@@ -220,6 +237,7 @@ export function registerCommands(
   context.subscriptions.push(
     toggleScopeDisposable,
     toggleSortModeDisposable,
+    toggleGroupModeDisposable,
     navigateToMatchDisposable,
     copyValuesDisposable,
     copyPathsDisposable,

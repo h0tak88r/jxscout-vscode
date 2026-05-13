@@ -88,6 +88,11 @@
         "command": "jxscout.toggleSortMode",
         "title": "Toggle sort mode",
         "icon": "$(sort-precedence)"
+      },
+      {
+        "command": "jxscout.toggleGroupMode",
+        "title": "Toggle group by file/match",
+        "icon": "$(symbol-method)"
       }
     ],
     "menus": {
@@ -105,6 +110,11 @@
         {
           "command": "jxscout.toggleSortMode",
           "when": "view == jxscoutAstView",
+          "group": "navigation"
+        },
+        {
+          "command": "jxscout.toggleGroupMode",
+          "when": "view == jxscoutWorkspaceView",
           "group": "navigation"
         }
       ],

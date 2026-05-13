@@ -5,7 +5,7 @@ import {
 } from "../providers/ast-analysis-tree-provider";
 import { FileExplorerTreeProvider } from "../providers/file-explorer-tree-provider";
 import { WebSocketClient } from "../services/websocket-client";
-import { ASTAnalyzerTreeNode } from "../types";
+import { ASTAnalyzerTreeNode, GroupMode } from "../types";
 
 export function createViews(
   context: vscode.ExtensionContext,
@@ -199,12 +199,13 @@ export async function loadProjectAnalysis(
 
     console.log(`loadProjectAnalysis: built ${projectNodes.length} project nodes`);
     if (projectNodes.length === 0) {
-      analysisTreeProvider.setAnalysisData([]);
+      analysisTreeProvider.setGroupData([], []);
       analysisTreeProvider.setState("success");
       return;
     }
 
-    analysisTreeProvider.setAnalysisData(projectNodes);
+    const matchGroupedData = buildMatchGroupedData(projectNodes);
+    analysisTreeProvider.setGroupData(projectNodes, matchGroupedData);
     analysisTreeProvider.setState("success");
     console.log("loadProjectAnalysis: completed successfully");
   } catch (error: any) {
@@ -214,6 +215,36 @@ export async function loadProjectAnalysis(
     );
     analysisTreeProvider.setState("empty");
   }
+}
+
+function buildMatchGroupedData(fileGroupedNodes: ASTAnalyzerTreeNode[]): ASTAnalyzerTreeNode[] {
+  const categoryMap = new Map<string, ASTAnalyzerTreeNode[]>();
+
+  for (const fileNode of fileGroupedNodes) {
+    const filePath = fileNode.description || fileNode.label || "";
+    const fileName = fileNode.label || "unknown";
+    for (const categoryNode of fileNode.children || []) {
+      const baseName = (categoryNode.label || "").replace(/\s*\[\d+\]$/, "");
+      if (!categoryMap.has(baseName)) {
+        categoryMap.set(baseName, []);
+      }
+      categoryMap.get(baseName)!.push({
+        type: "navigation" as const,
+        label: fileName,
+        description: categoryNode.label,
+        tooltip: filePath,
+        iconName: fileNode.iconName,
+        children: categoryNode.children,
+      });
+    }
+  }
+
+  return Array.from(categoryMap.entries()).map(([name, files]) => ({
+    type: "navigation" as const,
+    label: name,
+    children: files,
+    iconName: "symbol-method",
+  }));
 }
 
 function injectFilePath(

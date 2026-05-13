@@ -39,7 +39,8 @@ export function activate(context: vscode.ExtensionContext) {
     explorerTreeProvider,
     astView,
     workspaceView,
-    fileView
+    fileView,
+    workspaceTreeProvider
   );
 
   // Connect to WebSocket and load data

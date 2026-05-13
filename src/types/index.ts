@@ -32,6 +32,7 @@ export interface AnalysisResult {
 }
 
 export type ViewScope = "project" | "file";
+export type GroupMode = "file" | "matchType";
 export type SortMode = "alphabetical" | "occurrence";
 export type TreeState = "loading" | "asset-not-found" | "success" | "empty";
 

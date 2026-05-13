@@ -5,6 +5,7 @@ A VSCode extension for integrating with [jxscout](https://github.com/franciscone
 ## Features
 
 - **Workspace Matchers** — automatically scans all JS/HTML files in your project and shows every matcher found across every file, grouped by file
+- **Toggle grouping** — switch between "By File" and "By Match" views in the Workspace Matchers panel using the title bar button
 - **File-level Descriptors** — browse matchers (paths, hostnames, endpoints, etc.) for the currently open file
 - **Navigate to match** — click any match to open the exact line in the source file
 - **Copy tools** — copy values, paths, hostnames, and query parameters for brute-forcing

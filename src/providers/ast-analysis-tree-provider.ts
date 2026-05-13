@@ -4,6 +4,7 @@ import {
   TreeItemOptions,
   TreeState,
   ViewScope,
+  GroupMode,
   SortMode,
 } from "../types";
 import * as path from "path";
@@ -71,7 +72,15 @@ export class AstAnalysisTreeProvider
   readonly onDidChangeScope: vscode.Event<ViewScope> =
     this._onDidChangeScope.event;
 
+  private _onDidChangeGroupMode: vscode.EventEmitter<GroupMode> =
+    new vscode.EventEmitter<GroupMode>();
+  readonly onDidChangeGroupMode: vscode.Event<GroupMode> =
+    this._onDidChangeGroupMode.event;
+
   private _scope: ViewScope = "file";
+  private _groupMode: GroupMode = "file";
+  private _fileGroupedData?: ASTAnalyzerTreeNode[];
+  private _matchGroupedData?: ASTAnalyzerTreeNode[];
   private _analysisData?: ASTAnalyzerTreeNode[];
   private _state: TreeState = "empty";
   private _sortMode: SortMode = "occurrence";
@@ -92,6 +101,28 @@ export class AstAnalysisTreeProvider
   setScope(scope: ViewScope) {
     this._scope = scope;
     this._onDidChangeScope.fire(scope);
+    this.refresh();
+  }
+
+  getGroupMode(): GroupMode {
+    return this._groupMode;
+  }
+
+  setGroupMode(mode: GroupMode) {
+    this._groupMode = mode;
+    this._applyGroupMode();
+    this._onDidChangeGroupMode.fire(mode);
+  }
+
+  setGroupData(fileGrouped: ASTAnalyzerTreeNode[], matchGrouped: ASTAnalyzerTreeNode[]) {
+    this._fileGroupedData = fileGrouped;
+    this._matchGroupedData = matchGrouped;
+    this._applyGroupMode();
+  }
+
+  private _applyGroupMode() {
+    this._analysisData =
+      this._groupMode === "file" ? this._fileGroupedData : this._matchGroupedData;
     this.refresh();
   }
 
