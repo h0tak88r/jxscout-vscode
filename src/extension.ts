@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { WebSocketClient } from "./services/websocket-client";
-import { createViews, loadProjectAnalysis, updateASTAnalysis } from "./views";
+import { createViews, updateASTAnalysis } from "./views";
 import { registerCommands } from "./commands";
 import { VersionCheckService } from "./services/versionCheck";
 
@@ -27,9 +27,9 @@ export function activate(context: vscode.ExtensionContext) {
   connectionStatusBarItem.tooltip = "Connecting to jxscout server...";
   connectionStatusBarItem.show();
 
-  // Create views and get providers (start in loading state)
+  // Create views and get providers
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const { astView, workspaceView, fileView, analysisTreeProvider, workspaceTreeProvider, explorerTreeProvider } =
+  const { astView, fileView, analysisTreeProvider, explorerTreeProvider } =
     createViews(context, workspaceRoot, wsClient);
 
   // Register commands
@@ -38,19 +38,15 @@ export function activate(context: vscode.ExtensionContext) {
     analysisTreeProvider,
     explorerTreeProvider,
     astView,
-    workspaceView,
-    fileView,
-    workspaceTreeProvider
+    fileView
   );
 
-  // Connect to WebSocket and load data
+  // Connect to WebSocket and load file-level data
   wsClient
     .connect()
     .then(() => {
       connectionStatusBarItem.text = "jxscout $(check)";
       connectionStatusBarItem.tooltip = "Connected to jxscout server";
-
-      loadProjectAnalysis(workspaceTreeProvider, wsClient);
 
       const activeEditor = vscode.window.activeTextEditor;
       if (activeEditor && analysisTreeProvider.getScope() === "file") {
@@ -63,8 +59,6 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showErrorMessage(
         `Failed to connect to jxscout server: ${error.message}`
       );
-      workspaceTreeProvider.setAnalysisData([]);
-      workspaceTreeProvider.setState("success");
     });
 
   // Add status bar items to subscriptions

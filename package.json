@@ -13,8 +13,7 @@
   },
     "activationEvents": [
     "onView:jxscoutAstView",
-    "onView:jxscoutFileView",
-    "onView:jxscoutWorkspaceView"
+    "onView:jxscoutFileView"
   ],
   "icon": "resources/logo.png",
   "categories": [
@@ -38,12 +37,6 @@
           "id": "jxscoutAstView",
           "name": "Descriptors",
           "icon": "symbol-structure"
-        },
-        {
-          "type": "tree",
-          "id": "jxscoutWorkspaceView",
-          "name": "Workspace Matchers",
-          "icon": "symbol-method"
         },
         {
           "type": "tree",
@@ -114,7 +107,7 @@
         },
         {
           "command": "jxscout.toggleGroupMode",
-          "when": "view == jxscoutWorkspaceView",
+          "when": "view == jxscoutAstView && scope == project",
           "group": "navigation"
         }
       ],
@@ -125,21 +118,9 @@
           "group": "1_modification"
         },
         {
-          "command": "jxscout.copyValues",
-          "when": "view == jxscoutWorkspaceView",
-          "group": "1_modification",
-          "args": "workspaceView"
-        },
-        {
           "command": "jxscout.copyPaths",
           "when": "view == jxscoutAstView",
           "group": "1_modification"
-        },
-        {
-          "command": "jxscout.copyPaths",
-          "when": "view == jxscoutWorkspaceView",
-          "group": "1_modification",
-          "args": "workspaceView"
         },
         {
           "command": "jxscout.copyQueryParams",
@@ -147,21 +128,9 @@
           "group": "1_modification"
         },
         {
-          "command": "jxscout.copyQueryParams",
-          "when": "view == jxscoutWorkspaceView",
-          "group": "1_modification",
-          "args": "workspaceView"
-        },
-        {
           "command": "jxscout.copyHostnames",
           "when": "view == jxscoutAstView",
           "group": "1_modification"
-        },
-        {
-          "command": "jxscout.copyHostnames",
-          "when": "view == jxscoutWorkspaceView",
-          "group": "1_modification",
-          "args": "workspaceView"
         }
       ]
     },

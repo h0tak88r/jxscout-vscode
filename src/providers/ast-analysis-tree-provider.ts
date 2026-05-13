@@ -109,6 +109,9 @@ export class AstAnalysisTreeProvider
   }
 
   setGroupMode(mode: GroupMode) {
+    if (!this._fileGroupedData) {
+      return;
+    }
     this._groupMode = mode;
     this._applyGroupMode();
     this._onDidChangeGroupMode.fire(mode);
@@ -136,6 +139,8 @@ export class AstAnalysisTreeProvider
 
   setAnalysisData(data: ASTAnalyzerTreeNode[] | undefined) {
     this._analysisData = data;
+    this._fileGroupedData = data;
+    this._matchGroupedData = undefined;
     this.refresh();
   }
 

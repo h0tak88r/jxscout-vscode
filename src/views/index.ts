@@ -5,7 +5,7 @@ import {
 } from "../providers/ast-analysis-tree-provider";
 import { FileExplorerTreeProvider } from "../providers/file-explorer-tree-provider";
 import { WebSocketClient } from "../services/websocket-client";
-import { ASTAnalyzerTreeNode, GroupMode } from "../types";
+import { ASTAnalyzerTreeNode } from "../types";
 
 export function createViews(
   context: vscode.ExtensionContext,
@@ -13,18 +13,11 @@ export function createViews(
   wsClient: WebSocketClient
 ) {
   const analysisTreeProvider = new AstAnalysisTreeProvider();
-  const workspaceTreeProvider = new AstAnalysisTreeProvider();
   const explorerTreeProvider = new FileExplorerTreeProvider(workspaceRoot);
 
   // Register the views
   const astView = vscode.window.createTreeView("jxscoutAstView", {
     treeDataProvider: analysisTreeProvider,
-    showCollapseAll: true,
-    canSelectMany: true,
-  });
-
-  const workspaceView = vscode.window.createTreeView("jxscoutWorkspaceView", {
-    treeDataProvider: workspaceTreeProvider,
     showCollapseAll: true,
     canSelectMany: true,
   });
@@ -36,10 +29,7 @@ export function createViews(
 
   // Initial titles
   astView.title = "Descriptors (File)";
-  workspaceView.title = "Workspace Matchers";
   fileView.title = "File Explorer (Project)";
-
-  workspaceTreeProvider.setState("loading");
 
   // Register active editor change handler
   const editorChangeDisposable = vscode.window.onDidChangeActiveTextEditor(
@@ -64,7 +54,6 @@ export function createViews(
 
   context.subscriptions.push(
     astView,
-    workspaceView,
     fileView,
     editorChangeDisposable,
     scopeChangeDisposable
@@ -72,10 +61,8 @@ export function createViews(
 
   return {
     astView,
-    workspaceView,
     fileView,
     analysisTreeProvider,
-    workspaceTreeProvider,
     explorerTreeProvider,
   };
 }

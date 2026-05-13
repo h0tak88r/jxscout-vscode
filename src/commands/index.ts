@@ -8,9 +8,7 @@ export function registerCommands(
   analysisTreeProvider: AstAnalysisTreeProvider,
   explorerTreeProvider: FileExplorerTreeProvider | null,
   astView: vscode.TreeView<any>,
-  workspaceView: vscode.TreeView<any> | null,
-  fileView: vscode.TreeView<any> | null,
-  workspaceTreeProvider: AstAnalysisTreeProvider | null
+  fileView: vscode.TreeView<any> | null
 ) {
   // Set initial scope context
   vscode.commands.executeCommand("setContext", "scope", "file");
@@ -54,15 +52,14 @@ export function registerCommands(
   const toggleGroupModeDisposable = vscode.commands.registerCommand(
     "jxscout.toggleGroupMode",
     () => {
-      if (!workspaceTreeProvider || !workspaceView) { return; }
       const newMode: GroupMode =
-        workspaceTreeProvider.getGroupMode() === "file"
+        analysisTreeProvider.getGroupMode() === "file"
           ? "matchType"
           : "file";
-      workspaceTreeProvider.setGroupMode(newMode);
-      workspaceView.title = `Workspace Matchers (${
+      analysisTreeProvider.setGroupMode(newMode);
+      astView.title = `Descriptors (${analysisTreeProvider.getScope()}) - ${
         newMode === "file" ? "By File" : "By Match"
-      })`;
+      }`;
     }
   );
 
@@ -108,11 +105,9 @@ export function registerCommands(
   // Copy values command
   const copyValuesDisposable = vscode.commands.registerCommand(
     "jxscout.copyValues",
-    async (viewId?: string) => {
-      const view =
-        viewId === "workspaceView" ? workspaceView : astView;
-      const selectedItems = view?.selection || [];
-      if (selectedItems.length === 0) {
+    async () => {
+      const selectedItems = astView.selection;
+      if (!selectedItems || selectedItems.length === 0) {
         return;
       }
 
@@ -134,11 +129,9 @@ export function registerCommands(
   // Copy paths for bruteforcing
   const copyPathsDisposable = vscode.commands.registerCommand(
     "jxscout.copyPaths",
-    async (viewId?: string) => {
-      const view =
-        viewId === "workspaceView" ? workspaceView : astView;
-      const selectedItems = view?.selection || [];
-      if (selectedItems.length === 0) {
+    async () => {
+      const selectedItems = astView.selection;
+      if (!selectedItems || selectedItems.length === 0) {
         return;
       }
 
@@ -165,11 +158,9 @@ export function registerCommands(
   // Copy hostnames command
   const copyHostnamesDisposable = vscode.commands.registerCommand(
     "jxscout.copyHostnames",
-    async (viewId?: string) => {
-      const view =
-        viewId === "workspaceView" ? workspaceView : astView;
-      const selectedItems = view?.selection || [];
-      if (selectedItems.length === 0) {
+    async () => {
+      const selectedItems = astView.selection;
+      if (!selectedItems || selectedItems.length === 0) {
         return;
       }
 
@@ -197,11 +188,9 @@ export function registerCommands(
   // Copy query params command
   const copyQueryParamsDisposable = vscode.commands.registerCommand(
     "jxscout.copyQueryParams",
-    async (viewId?: string) => {
-      const view =
-        viewId === "workspaceView" ? workspaceView : astView;
-      const selectedItems = view?.selection || [];
-      if (selectedItems.length === 0) {
+    async () => {
+      const selectedItems = astView.selection;
+      if (!selectedItems || selectedItems.length === 0) {
         return;
       }
 
