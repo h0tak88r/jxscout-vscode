@@ -8,6 +8,7 @@ export function registerCommands(
   analysisTreeProvider: AstAnalysisTreeProvider,
   explorerTreeProvider: FileExplorerTreeProvider | null,
   astView: vscode.TreeView<any>,
+  workspaceView: vscode.TreeView<any> | null,
   fileView: vscode.TreeView<any> | null
 ) {
   // Set initial scope context
@@ -20,9 +21,7 @@ export function registerCommands(
       const newScope =
         analysisTreeProvider.getScope() === "project" ? "file" : "project";
 
-      // Update the context key
       vscode.commands.executeCommand("setContext", "scope", newScope);
-
       analysisTreeProvider.setScope(newScope);
       if (explorerTreeProvider) {
         explorerTreeProvider.setScope(newScope);
@@ -53,8 +52,23 @@ export function registerCommands(
   // Navigate to match command
   const navigateToMatchDisposable = vscode.commands.registerCommand(
     "jxscout.navigateToMatch",
-    (data: any) => {
-      const editor = vscode.window.activeTextEditor;
+    async (data: any) => {
+      let editor = vscode.window.activeTextEditor;
+
+      if (data.filePath) {
+        if (!editor || editor.document.uri.fsPath !== data.filePath) {
+          try {
+            const doc = await vscode.workspace.openTextDocument(data.filePath);
+            editor = await vscode.window.showTextDocument(doc);
+          } catch (err) {
+            vscode.window.showErrorMessage(
+              `Failed to open file: ${data.filePath}`
+            );
+            return;
+          }
+        }
+      }
+
       if (!editor) {
         return;
       }
@@ -77,15 +91,17 @@ export function registerCommands(
   // Copy values command
   const copyValuesDisposable = vscode.commands.registerCommand(
     "jxscout.copyValues",
-    async () => {
-      const selectedItems = astView.selection;
-      if (!selectedItems || selectedItems.length === 0) {
+    async (viewId?: string) => {
+      const view =
+        viewId === "workspaceView" ? workspaceView : astView;
+      const selectedItems = view?.selection || [];
+      if (selectedItems.length === 0) {
         return;
       }
 
       const values = selectedItems
-        .filter((item) => item.node.type === "match")
-        .map((item) => item.node.data.value);
+        .filter((item: any) => item.node.type === "match")
+        .map((item: any) => item.node.data.value);
 
       const uniqueValues = new Set(values);
 
@@ -101,16 +117,20 @@ export function registerCommands(
   // Copy paths for bruteforcing
   const copyPathsDisposable = vscode.commands.registerCommand(
     "jxscout.copyPaths",
-    async () => {
-      const selectedItems = astView.selection;
-      if (!selectedItems || selectedItems.length === 0) {
+    async (viewId?: string) => {
+      const view =
+        viewId === "workspaceView" ? workspaceView : astView;
+      const selectedItems = view?.selection || [];
+      if (selectedItems.length === 0) {
         return;
       }
 
       const values = selectedItems
-        .filter((item) => item.node.type === "match")
-        .filter((item) => item.node.data.extra && item.node.data.extra.pathname)
-        .map((item) => item.node.data.extra.pathname);
+        .filter((item: any) => item.node.type === "match")
+        .filter(
+          (item: any) => item.node.data.extra && item.node.data.extra.pathname
+        )
+        .map((item: any) => item.node.data.extra.pathname);
 
       const uniqueValues = new Set(values);
 
@@ -128,16 +148,21 @@ export function registerCommands(
   // Copy hostnames command
   const copyHostnamesDisposable = vscode.commands.registerCommand(
     "jxscout.copyHostnames",
-    async () => {
-      const selectedItems = astView.selection;
-      if (!selectedItems || selectedItems.length === 0) {
+    async (viewId?: string) => {
+      const view =
+        viewId === "workspaceView" ? workspaceView : astView;
+      const selectedItems = view?.selection || [];
+      if (selectedItems.length === 0) {
         return;
       }
 
       const values = selectedItems
-        .filter((item) => item.node.type === "match")
-        .filter((item) => item.node.data.extra && item.node.data.extra.hostname)
-        .map((item) => item.node.data.extra.hostname);
+        .filter((item: any) => item.node.type === "match")
+        .filter(
+          (item: any) =>
+            item.node.data.extra && item.node.data.extra.hostname
+        )
+        .map((item: any) => item.node.data.extra.hostname);
 
       const uniqueValues = new Set(values);
 
@@ -152,26 +177,30 @@ export function registerCommands(
     }
   );
 
-  // Copy paths for bruteforcing
+  // Copy query params command
   const copyQueryParamsDisposable = vscode.commands.registerCommand(
     "jxscout.copyQueryParams",
-    async () => {
-      const selectedItems = astView.selection;
-      if (!selectedItems || selectedItems.length === 0) {
+    async (viewId?: string) => {
+      const view =
+        viewId === "workspaceView" ? workspaceView : astView;
+      const selectedItems = view?.selection || [];
+      if (selectedItems.length === 0) {
         return;
       }
 
       const allQueryParams = new Set<string>();
 
-      const values = selectedItems
-        .filter((item) => item.node.type === "match")
+      selectedItems
+        .filter((item: any) => item.node.type === "match")
         .filter(
-          (item) => item.node.data.extra && item.node.data.extra["query-params"]
+          (item: any) =>
+            item.node.data.extra && item.node.data.extra["query-params"]
         )
         .map(
-          (item) => new URLSearchParams(item.node.data.extra["query-params"])
+          (item: any) =>
+            new URLSearchParams(item.node.data.extra["query-params"])
         )
-        .map((params) => {
+        .forEach((params: URLSearchParams) => {
           for (const [key] of params.entries()) {
             allQueryParams.add(key);
           }
@@ -180,7 +209,7 @@ export function registerCommands(
       if (allQueryParams.size > 0) {
         await vscode.env.clipboard.writeText([...allQueryParams].join("\n"));
         vscode.window.showInformationMessage(
-          `Copied ${allQueryParams.size} values to clipboard`
+          `Copied ${allQueryParams.size} query params to clipboard`
         );
       } else {
         vscode.window.showInformationMessage("No query params found");
@@ -194,8 +223,8 @@ export function registerCommands(
     navigateToMatchDisposable,
     copyValuesDisposable,
     copyPathsDisposable,
-    copyQueryParamsDisposable,
-    copyHostnamesDisposable
+    copyHostnamesDisposable,
+    copyQueryParamsDisposable
   );
 
   function updateViewTitles(scope: ViewScope) {

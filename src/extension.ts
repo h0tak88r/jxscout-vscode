@@ -1,8 +1,7 @@
 import * as vscode from "vscode";
 import { WebSocketClient } from "./services/websocket-client";
-import { createViews } from "./views";
+import { createViews, loadProjectAnalysis, updateASTAnalysis } from "./views";
 import { registerCommands } from "./commands";
-import { PremiumView } from "./views/premium-view";
 import { VersionCheckService } from "./services/versionCheck";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -28,12 +27,34 @@ export function activate(context: vscode.ExtensionContext) {
   connectionStatusBarItem.tooltip = "Connecting to jxscout server...";
   connectionStatusBarItem.show();
 
-  // Connect to WebSocket server
+  // Create views and get providers (start in loading state)
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const { astView, workspaceView, fileView, analysisTreeProvider, workspaceTreeProvider, explorerTreeProvider } =
+    createViews(context, workspaceRoot, wsClient);
+
+  // Register commands
+  registerCommands(
+    context,
+    analysisTreeProvider,
+    explorerTreeProvider,
+    astView,
+    workspaceView,
+    fileView
+  );
+
+  // Connect to WebSocket and load data
   wsClient
     .connect()
     .then(() => {
       connectionStatusBarItem.text = "jxscout $(check)";
       connectionStatusBarItem.tooltip = "Connected to jxscout server";
+
+      loadProjectAnalysis(workspaceTreeProvider, wsClient);
+
+      const activeEditor = vscode.window.activeTextEditor;
+      if (activeEditor && analysisTreeProvider.getScope() === "file") {
+        updateASTAnalysis(activeEditor, analysisTreeProvider, wsClient);
+      }
     })
     .catch((error) => {
       connectionStatusBarItem.text = "jxscout $(error)";
@@ -41,39 +62,9 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showErrorMessage(
         `Failed to connect to jxscout server: ${error.message}`
       );
+      workspaceTreeProvider.setAnalysisData([]);
+      workspaceTreeProvider.setState("success");
     });
-
-  // Create views and get providers
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const { astView, analysisTreeProvider } = createViews(
-    context,
-    workspaceRoot,
-    wsClient
-  );
-
-  // Register commands
-  registerCommands(
-    context,
-    analysisTreeProvider,
-    null, // No longer need explorerTreeProvider
-    astView,
-    null // No longer need fileView
-  );
-
-  // Register premium views
-  const premiumViewProvider = PremiumView.getInstance();
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider("jxscoutPremiumView", {
-      resolveWebviewView: (webviewView, context, token) => {
-        premiumViewProvider.resolveWebviewView(webviewView, context, token);
-      },
-    }),
-    vscode.window.registerWebviewViewProvider("jxscoutFileView", {
-      resolveWebviewView: (webviewView, context, token) => {
-        premiumViewProvider.resolveWebviewView(webviewView, context, token);
-      },
-    })
-  );
 
   // Add status bar items to subscriptions
   context.subscriptions.push(connectionStatusBarItem);

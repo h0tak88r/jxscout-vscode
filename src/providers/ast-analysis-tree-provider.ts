@@ -66,6 +66,11 @@ export class AstAnalysisTreeProvider
     AstAnalysisTreeItem | undefined | null | void
   > = this._onDidChangeTreeData.event;
 
+  private _onDidChangeScope: vscode.EventEmitter<ViewScope> =
+    new vscode.EventEmitter<ViewScope>();
+  readonly onDidChangeScope: vscode.Event<ViewScope> =
+    this._onDidChangeScope.event;
+
   private _scope: ViewScope = "file";
   private _analysisData?: ASTAnalyzerTreeNode[];
   private _state: TreeState = "empty";
@@ -86,6 +91,7 @@ export class AstAnalysisTreeProvider
 
   setScope(scope: ViewScope) {
     this._scope = scope;
+    this._onDidChangeScope.fire(scope);
     this.refresh();
   }
 
@@ -111,10 +117,6 @@ export class AstAnalysisTreeProvider
   }
 
   getChildren(element?: AstAnalysisTreeItem): Thenable<AstAnalysisTreeItem[]> {
-    if (this._scope === "project") {
-      return Promise.resolve([]);
-    }
-
     if (this._state === "empty") {
       return Promise.resolve([
         new AstAnalysisTreeItem({

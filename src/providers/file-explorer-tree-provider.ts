@@ -58,37 +58,20 @@ export class FileExplorerTreeProvider
   getChildren(
     element?: FileExplorerTreeItem
   ): Thenable<FileExplorerTreeItem[]> {
-    if (this._scope === "project") {
-      if (!this._workspaceRoot) {
-        return Promise.resolve([]);
-      }
-
-      if (!element) {
-        return this.getProjectRootItems();
-      }
-
-      return this.getDirectoryItems(element.resourceUri?.fsPath);
-    } else {
-      // File scope - show current file structure
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        return Promise.resolve([]);
-      }
-
-      if (!element) {
-        return Promise.resolve([
-          new FileExplorerTreeItem(
-            "Current File Structure",
-            vscode.TreeItemCollapsibleState.Expanded,
-            "directory",
-            "file-code"
-          ),
-        ]);
-      }
-
-      // TODO: Implement file structure analysis
+    if (!this._workspaceRoot) {
       return Promise.resolve([]);
     }
+
+    if (!element) {
+      return this.getProjectRootItems();
+    }
+
+    const fsPath = element.resourceUri?.fsPath;
+    if (!fsPath || !fs.existsSync(fsPath) || !fs.statSync(fsPath).isDirectory()) {
+      return Promise.resolve([]);
+    }
+
+    return this.getDirectoryItems(fsPath);
   }
 
   private getProjectRootItems(): Thenable<FileExplorerTreeItem[]> {

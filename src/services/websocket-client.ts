@@ -38,6 +38,7 @@ export class WebSocketClient {
       reject: (error: Error) => void;
     }
   > = new Map();
+  private analysisCache: Map<string, AnalysisResult> = new Map();
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private readonly reconnectDelay = 5000; // 5 seconds
   private serverUrl: string;
@@ -138,6 +139,10 @@ export class WebSocketClient {
   }
 
   async getAnalysis(filePath: string): Promise<AnalysisResult> {
+    if (this.analysisCache.has(filePath)) {
+      return Promise.resolve(this.analysisCache.get(filePath)!);
+    }
+
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
         reject(new Error("WebSocket is not connected"));
@@ -153,9 +158,19 @@ export class WebSocketClient {
         },
       };
 
-      this.messageCallbacks.set(messageId, { resolve, reject });
+      this.messageCallbacks.set(messageId, {
+        resolve: (result: AnalysisResult) => {
+          this.analysisCache.set(filePath, result);
+          resolve(result);
+        },
+        reject,
+      });
       this.ws.send(JSON.stringify(message));
     });
+  }
+
+  clearCache(): void {
+    this.analysisCache.clear();
   }
 
   disconnect() {

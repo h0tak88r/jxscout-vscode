@@ -6,19 +6,21 @@
     "type": "git",
     "url": "https://github.com/jxscout/jxscout-vscode"
   },
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "jxscout",
   "engines": {
     "vscode": "^1.92.0"
   },
+    "activationEvents": [
+    "onView:jxscoutAstView",
+    "onView:jxscoutFileView",
+    "onView:jxscoutWorkspaceView"
+  ],
   "icon": "resources/logo.png",
   "categories": [
     "Other"
   ],
   "main": "./dist/extension.js",
-  "enabledApiProposals": [
-    "contribViewContainerTitle"
-  ],
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -35,18 +37,16 @@
           "type": "tree",
           "id": "jxscoutAstView",
           "name": "Descriptors",
-          "icon": "symbol-structure",
-          "when": "scope == file"
+          "icon": "symbol-structure"
         },
         {
-          "type": "webview",
-          "id": "jxscoutPremiumView",
-          "name": "Descriptors",
-          "icon": "symbol-structure",
-          "when": "scope == project"
+          "type": "tree",
+          "id": "jxscoutWorkspaceView",
+          "name": "Workspace Matchers",
+          "icon": "symbol-method"
         },
         {
-          "type": "webview",
+          "type": "tree",
           "id": "jxscoutFileView",
           "name": "File Explorer",
           "icon": "files"
@@ -106,16 +106,6 @@
           "command": "jxscout.toggleSortMode",
           "when": "view == jxscoutAstView",
           "group": "navigation"
-        },
-        {
-          "command": "jxscout.toggleScope",
-          "when": "view == jxscoutPremiumView",
-          "group": "navigation"
-        },
-        {
-          "command": "jxscout.toggleSortMode",
-          "when": "view == jxscoutPremiumView",
-          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -125,9 +115,21 @@
           "group": "1_modification"
         },
         {
+          "command": "jxscout.copyValues",
+          "when": "view == jxscoutWorkspaceView",
+          "group": "1_modification",
+          "args": "workspaceView"
+        },
+        {
           "command": "jxscout.copyPaths",
           "when": "view == jxscoutAstView",
           "group": "1_modification"
+        },
+        {
+          "command": "jxscout.copyPaths",
+          "when": "view == jxscoutWorkspaceView",
+          "group": "1_modification",
+          "args": "workspaceView"
         },
         {
           "command": "jxscout.copyQueryParams",
@@ -135,9 +137,21 @@
           "group": "1_modification"
         },
         {
+          "command": "jxscout.copyQueryParams",
+          "when": "view == jxscoutWorkspaceView",
+          "group": "1_modification",
+          "args": "workspaceView"
+        },
+        {
           "command": "jxscout.copyHostnames",
           "when": "view == jxscoutAstView",
           "group": "1_modification"
+        },
+        {
+          "command": "jxscout.copyHostnames",
+          "when": "view == jxscoutWorkspaceView",
+          "group": "1_modification",
+          "args": "workspaceView"
         }
       ]
     },
