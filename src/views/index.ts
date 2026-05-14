@@ -205,31 +205,37 @@ export async function loadProjectAnalysis(
 }
 
 function buildMatchGroupedData(fileGroupedNodes: ASTAnalyzerTreeNode[]): ASTAnalyzerTreeNode[] {
-  const categoryMap = new Map<string, ASTAnalyzerTreeNode[]>();
+  const categoryMap = new Map<string, { matches: ASTAnalyzerTreeNode[]; totalCount: number }>();
 
   for (const fileNode of fileGroupedNodes) {
     const filePath = fileNode.description || fileNode.label || "";
     const fileName = fileNode.label || "unknown";
     for (const categoryNode of fileNode.children || []) {
-      const baseName = (categoryNode.label || "").replace(/\s*\[\d+\]$/, "");
+      const rawLabel = categoryNode.label || "";
+      const baseName = rawLabel.replace(/\s*\[\d+\]\s*$/, "");
+      const countMatch = rawLabel.match(/\[(\d+)\]\s*$/);
+      const fileCount = countMatch ? parseInt(countMatch[1], 10) : 0;
+
       if (!categoryMap.has(baseName)) {
-        categoryMap.set(baseName, []);
+        categoryMap.set(baseName, { matches: [], totalCount: 0 });
       }
-      categoryMap.get(baseName)!.push({
-        type: "navigation" as const,
-        label: fileName,
-        description: categoryNode.label,
-        tooltip: filePath,
-        iconName: fileNode.iconName,
-        children: categoryNode.children,
-      });
+
+      const entry = categoryMap.get(baseName)!;
+      for (const match of categoryNode.children || []) {
+        entry.matches.push({
+          ...match,
+          description: fileName,
+          tooltip: filePath,
+        });
+      }
+      entry.totalCount += fileCount;
     }
   }
 
-  return Array.from(categoryMap.entries()).map(([name, files]) => ({
+  return Array.from(categoryMap.entries()).map(([name, entry]) => ({
     type: "navigation" as const,
-    label: name,
-    children: files,
+    label: `${name} [${entry.totalCount}]`,
+    children: entry.matches,
     iconName: "symbol-method",
   }));
 }
